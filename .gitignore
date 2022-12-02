@@ -1,0 +1,4 @@
+keys
+vault/data-*/raft
+vault/data-*/node-id
+vault/data-*/vault.db

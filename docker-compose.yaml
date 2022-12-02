@@ -1,0 +1,80 @@
+version: "3.8"
+
+networks:
+  vault-lab:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.19.0.0/16"
+
+services:
+  vault-01:
+    image: hashicorp/vault:1.12.0
+    restart: always
+    volumes:
+      - ./vault/vault-01:/vault/config:rw
+      - ./vault/data-01:/vault/data
+    ports:
+      - "8200:8200/tcp"
+    cap_add:
+      - IPC_LOCK
+    container_name: vault-01
+    entrypoint: "vault server -config=/vault/config"
+    networks:
+      vault-lab:
+        aliases:
+          - vault-01
+        ipv4_address: 172.19.12.10
+  vault-02:
+    image: hashicorp/vault:1.12.0
+    restart: always
+    volumes:
+      - ./vault/vault-02:/vault/config:rw
+      - ./vault/data-02:/vault/data
+    ports:
+      - "18200:8200/tcp"
+    cap_add:
+      - IPC_LOCK
+    container_name: vault-02
+    entrypoint: "vault server -config=/vault/config"
+    networks:
+      vault-lab:
+        aliases:
+          - vault-02
+        ipv4_address: 172.19.12.11
+  vault-03:
+    image: hashicorp/vault:1.12.0
+    restart: always
+    volumes:
+      - ./vault/vault-03:/vault/config:rw
+      - ./vault/data-03:/vault/data
+    ports:
+      - "28200:8200/tcp"
+    cap_add:
+      - IPC_LOCK
+    container_name: vault-03
+    entrypoint: "vault server -config=/vault/config"
+    networks:
+      vault-lab:
+        aliases:
+          - vault-03
+        ipv4_address: 172.19.12.12
+  haproxy:
+    image: haproxy:2.3
+    depends_on:
+      - vault-01
+      - vault-02
+      - vault-03
+    environment:
+      - BALANCE=roundrobin
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    ports:
+      - 9200:80
+      - 1936:1936
+    container_name: haproxy
+    networks:
+      vault-lab:
+        aliases:
+          - haproxy
+        ipv4_address: 172.19.12.20
